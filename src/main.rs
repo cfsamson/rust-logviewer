@@ -83,7 +83,14 @@ pub fn parse_log_files(files: Vec<RawFile>) -> Result<Vec<LogFile>, io::Error> {
 
     for file in files {
         let filename = file.filename;
-        let log_entries = parse_log_file(file.file)?;
+        let log_entries = match parse_log_file(file.file) {
+            Ok(entries) => entries,
+            Err(e) => {
+                eprintln!("{}", e);
+                continue;
+            }
+        };
+        
         log_files.push(LogFile {
             filename,
             log_entries,
