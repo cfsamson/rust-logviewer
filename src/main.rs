@@ -2,11 +2,17 @@
 
 #[macro_use]
 extern crate rocket;
-use rocket::{Config, config::Limits, response::content::Html};
 use rocket::response::NamedFile;
+use rocket::{config::Limits, response::content::Html, Config};
 use serde::Serialize;
 
-use std::{fs::{self, File}, io::{self, Read}, path::PathBuf, process::Command, vec};
+use std::{
+    fs::{self, File},
+    io::{self, Read},
+    path::PathBuf,
+    process::Command,
+    vec,
+};
 
 use rocket_contrib::json::Json;
 
@@ -62,11 +68,11 @@ fn main() {
     }
 
     let config = Config::build(rocket::config::Environment::Production)
-    .address("localhost")
-    .port(9000)
-    .log_level(rocket::config::LoggingLevel::Normal)
-    .finalize()
-    .expect("Invalid configuration");
+        .address("localhost")
+        .port(9000)
+        .log_level(rocket::config::LoggingLevel::Normal)
+        .finalize()
+        .expect("Invalid configuration");
 
     rocket::custom(config)
         .mount("/", routes![index, get_logs])
@@ -96,8 +102,23 @@ pub fn log_file_search() -> Result<Vec<RawFile>, io::Error> {
 fn find_log_files(path: PathBuf) -> Result<Vec<RawFile>, io::Error> {
     let mut files = vec![];
 
-    for entry in fs::read_dir(path)? {
-        let entry = entry?;
+    let dir = match fs::read_dir(path) {
+        Ok(dir) => dir,
+        Err(e) => {
+            eprintln!("{}", e);
+            return Ok(vec![]);
+        }
+    };
+
+    for entry in dir {
+        let entry = match entry {
+            Ok(entry) => entry,
+            Err(e) => {
+                eprintln!("{}", e);
+                continue;
+            }
+        };
+
         let current_path = entry.path();
         if current_path.is_dir() {
             files.append(&mut find_log_files(current_path)?);
@@ -165,23 +186,38 @@ struct LogEntry {
 
 impl LogEntry {
     fn debug(line: usize, msg: String) -> Self {
-        LogEntry { line, entry: Entry::Debug(msg)}
+        LogEntry {
+            line,
+            entry: Entry::Debug(msg),
+        }
     }
 
     fn info(line: usize, msg: String) -> Self {
-        LogEntry { line, entry: Entry::Info(msg)}
+        LogEntry {
+            line,
+            entry: Entry::Info(msg),
+        }
     }
 
     fn warn(line: usize, msg: String) -> Self {
-        LogEntry { line, entry: Entry::Warn(msg)}
+        LogEntry {
+            line,
+            entry: Entry::Warn(msg),
+        }
     }
 
     fn error(line: usize, msg: String) -> Self {
-        LogEntry { line, entry: Entry::Error(msg)}
+        LogEntry {
+            line,
+            entry: Entry::Error(msg),
+        }
     }
 
     fn other(line: usize, msg: String) -> Self {
-        LogEntry { line, entry: Entry::Other(msg)}
+        LogEntry {
+            line,
+            entry: Entry::Other(msg),
+        }
     }
 }
 
