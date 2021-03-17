@@ -2,8 +2,7 @@
 
 #[macro_use]
 extern crate rocket;
-use rocket::response::NamedFile;
-use rocket::{config::Limits, response::content::Html, Config};
+use rocket::{response::content::Html, Config};
 use serde::Serialize;
 
 use std::{
