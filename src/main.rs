@@ -90,7 +90,7 @@ pub fn parse_log_files(files: Vec<RawFile>) -> Result<Vec<LogFile>, io::Error> {
                 continue;
             }
         };
-        
+
         log_files.push(LogFile {
             filename,
             log_entries,
@@ -137,7 +137,13 @@ fn find_log_files(path: PathBuf) -> Result<Vec<RawFile>, io::Error> {
                         .map(|osstr| osstr.to_string_lossy().to_string())
                         .unwrap_or("Invalid filename".to_string());
 
-                    let file = File::open(current_path)?;
+                    let file = match File::open(&current_path) {
+                        Ok(file) => file,
+                        Err(e) => {
+                            eprintln!("{}: {}", e, current_path.to_string_lossy().to_string());
+                            continue;
+                        }
+                    };
                     files.push(RawFile {
                         filename: name,
                         file,
