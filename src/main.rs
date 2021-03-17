@@ -108,10 +108,10 @@ pub fn log_file_search() -> Result<Vec<RawFile>, io::Error> {
 fn find_log_files(path: PathBuf) -> Result<Vec<RawFile>, io::Error> {
     let mut files = vec![];
 
-    let dir = match fs::read_dir(path) {
+    let dir = match fs::read_dir(&path) {
         Ok(dir) => dir,
         Err(e) => {
-            eprintln!("{}", e);
+            eprintln!("{}: {}", e, path.to_string_lossy().to_string());
             return Ok(vec![]);
         }
     };
