@@ -1,0 +1,297 @@
+<!DOCTYPE html>
+<!--[if lt IE 7]>      <html class="no-js lt-ie9 lt-ie8 lt-ie7"> <![endif]-->
+<!--[if IE 7]>         <html class="no-js lt-ie9 lt-ie8"> <![endif]-->
+<!--[if IE 8]>         <html class="no-js lt-ie9"> <![endif]-->
+<!--[if gt IE 8]>      <html class="no-js"> <!--<![endif]-->
+<html>
+
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <title>Test</title>
+    <meta name="description" content="">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0-beta2/dist/css/bootstrap.min.css"
+        rel="stylesheet"
+        integrity="sha384-BmbxuPwQa2lc/FVzBcNJ7UAyJxM6wuqIj61tLrc4wSX0szH/Ev+nYRRuWlolflfl"
+        crossorigin="anonymous">
+
+</head>
+
+<body>
+    <!--[if lt IE 7]>
+            <p class="browsehappy">You are using an <strong>outdated</strong> browser. Please <a href="#">upgrade your browser</a> to improve your experience.</p>
+        <![endif]-->
+
+    <select id="selectLog" name: "selectLog">
+        <option name="0" value="none" selected="selected">Select log</option>
+    </select>
+
+    <select id="filterLog" name: "filterLog">
+        <option name="0" value="none" selected="selected">Ingen filter</option>
+        <option name="1" value="info">INFO</option>
+        <option name="2" value="warn">WARN</option>
+        <option name="3" value="error">ERROR</option>
+        <option name="4" value="warnerror">WARN+ERROR</option>
+        <option name="5" value="debug">DEBUG</option>
+        <option name="6" value="other">OTHER</option>
+    </select>
+
+    <table id="logs" class="table">
+        <thead>
+            <tr>
+                <th scope="col">Linje #</td>
+                <th scope="col">Type</td>
+                <th scope="col">Tekst</td>
+            </tr>
+        </thead>
+        <tbody>
+            <!-- <tr class="table-danger">
+                <th scope="row">1</th>
+                <td>ERROR: Dette er en test</td>
+            </tr>
+            <tr class="table-info">
+                <th scope="col">2</th>
+                <td>INFO: Dette er info</td>
+            </tr> -->
+        </tbody>
+    </table>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0-beta2/dist/js/bootstrap.bundle.min.js"
+        integrity="sha384-b5kHyXgcpbZJO/tY9Ul7kGkf1S0CWuKcCD38l8YkeH8z8QjE0GmW1gYU5S9FOnJ0"
+        crossorigin="anonymous"></script>
+    <script type="text/javascript">
+        var DATA = [{
+                filename: "Log001.log",
+                log_entries: [{
+                        line: 1,
+                        entry: {Info: "INFO: This is some info"}
+                    },
+                    {
+                        line: 2,
+                        entry: {Error: "ERROR: This is an error"}
+                    }
+                ]
+            },
+            {
+                filename: "Log002.log",
+                log_entries: [{
+                        line: 1,
+                        entry: {Info: "INFO: This another line of info"}
+
+                    },
+                    {
+                        line: 2,
+                        entry: {Error: "ERROR: This an different error that occurred earlier"}
+                    },
+                    {
+                        line: 3,
+                        entry: {Debug: "DEBUG: This some debug log info"}
+                    },
+                    {
+                        line: 4,
+                        entry: {Warn: "WARN: This a warning about something that should not happen"}
+                    },
+                    {
+                        line: 5,
+                        entry: {Other: "OTHER: This is an log line that we couldn't parse"}
+                    }
+                ]
+            }
+        ];
+
+        window.onload = async function () {
+            let document = window.document;
+
+            let response = await fetch("/logs");
+            let data = await response.json();
+
+            if (data.response === "ok") {
+                DATA = data.data;
+            } else {
+                console.log(`ERROR: ${data.message}`);
+                // show error
+            }
+
+            // when data is loaded
+            dataLoaded();
+
+            let filterSelect = document.getElementById("filterLog");
+            filterSelect.onchange = filterLog;
+
+            //drawData(data)
+        }
+
+        function dataLoaded() {
+            let files = [...new Set(DATA.map((d) => d.filename))];
+            let select = document.getElementById("selectLog");
+            var i = 1;
+            for (f of files) {
+                let opt = document.createElement("option");
+                opt.name = i;
+                opt.value = f;
+                let txt = document.createTextNode(f);
+                opt.appendChild(txt);
+                select.appendChild(opt);
+                i++;
+            }
+
+            select.onchange = getLog;
+        }
+
+        function getLog(e) {
+            console.log(`Getting logs from: ${e.target.value}`);
+            let val = e.target.value;
+
+            if (val === "none") {
+                return;
+            }
+
+            let log = DATA.find((n) => n.filename === val);
+            drawData(log.log_entries);
+            document.getElementById("filterLog").value = "none";
+        }
+
+        function filterLog(e) {
+            let current_file = document.getElementById("selectLog").value;
+            if (current_file == "none") {
+                return;
+            }
+
+            let current_log = DATA.find((n) => n.filename === current_file);
+            let currentData = current_log.log_entries;
+
+            let filter = e.target.value;
+            console.log(filter);
+
+            var filteredData;
+
+            switch (filter) {
+                case "none":
+                    filteredData = currentData;
+                    break;
+                case "info":
+                    filteredData = filterData("INFO", currentData);
+                    break;
+                case "warn":
+                    filteredData = filterData("WARN", currentData);
+                    break;
+                case "error":
+                    filteredData = filterData("ERROR", currentData);
+                    break;
+                case "debug":
+                    filteredData = filterData("DEBUG", currentData);
+                    break;
+                case "other":
+                    filteredData = filterData("OTHER", currentData);
+                    break;
+                case "warnerror":
+                    filteredData = filterData("WARN+ERROR", currentData);
+                    break;
+                default:
+                    throw new Error("Invalid filter option")
+            }
+            
+            drawData(filteredData)
+        }
+
+        // Returns the filtered data
+        function filterData(filter, c_data) {
+            console.log(`filterData: ${filter}`);
+            switch (filter) {
+                case "INFO":
+                    return c_data.filter((n) => n.entry.Info ? true : false)
+                case "WARN":
+                    return c_data.filter((n) => n.entry.Warn ? true : false)
+                case "ERROR":
+                    return c_data.filter((n) => n.entry.Error ? true : false)
+                case "DEBUG":
+                    return c_data.filter((n) => n.entry.Debug ? true : false)
+                case "OTHER":
+                    return c_data.filter((n) => n.entry.Other ? true : false)
+                case "WARN+ERROR":
+                    return c_data.filter((n) => {
+                        let is_warn = n.entry.Warn ? true : false;
+                        let is_err = n.entry.Error ? true : false;
+                        return is_warn || is_err;
+                    })
+                default:
+                    console.log("ERROR: Invalid filter")
+                    return []
+            }
+
+        }
+
+
+        function drawData(data) {
+            let table = document.getElementById("logs");
+            let tbody = table.getElementsByTagName("tbody")[0];
+            // remove elements in the table
+            let c_nodescount = tbody.childElementCount;
+            for (i = 0; i < c_nodescount; i++) {
+                tbody.removeChild(tbody.lastChild);
+            }
+
+            // add new elements
+            for (d of data) {
+                var row_class = "";
+                var str_content = "";
+                var type = "";
+                if (d.entry.Info) {
+                    row_class = "";
+                    str_content = d.entry.Info;
+                    type = "INFO";
+                } else if (d.entry.Error) {
+                    row_class = "table-danger";
+                    str_content = d.entry.Error;
+                    type = "ERROR";
+                } else if (d.entry.Warn) {
+                    row_class = "table-warning";
+                    str_content = d.entry.Warn;
+                    type = "WARN";
+                } else if (d.entry.Debug) {
+                    row_class = "";
+                    str_content = d.entry.Debug;
+                    type = "DEBUG";
+                } else if (d.entry.Other) {
+                    row_class = "";
+                    str_content = d.entry.Other;
+                    type = "OTHER";
+                } else {
+                    console.log(`"ERROR: Unspecified type: ${d.entry}`)
+                    continue;
+                }
+
+                // <tr>
+                let tr = document.createElement("tr");
+                tr.className = row_class;
+
+                // <td>
+                var td = document.createElement("td");
+                var td_txt = document.createTextNode(d.line);
+                td.appendChild(td_txt);
+                tr.appendChild(td);
+                // </td>
+
+                // <td>
+                var td = document.createElement("td");
+                var td_txt = document.createTextNode(type);
+                td.appendChild(td_txt);
+                tr.appendChild(td);
+                // </td>
+
+                // <td>
+                var td = document.createElement("td");
+                var td_txt = document.createTextNode(str_content);
+                td.appendChild(td_txt);
+                tr.appendChild(td);
+                // </td>
+
+                tbody.appendChild(tr);
+                // </td>
+            }
+        }
+    </script>
+
+</body>
+
+</html>
