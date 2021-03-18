@@ -5,7 +5,7 @@ efficient tool to view log files. Focuses on ease of installation and ease
 of use. Only one binary to drop somwhere in PATH and it will work anywhere
 there is a browser available. Easy for non-techical users to use.
 
-![Example GIF](https://github.com/cfsamson/rust-logviewer/blob/master/assets/logv4.gif)
+![Example GIF](assets/logv4.gif)
 
 ## Usage
 

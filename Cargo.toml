@@ -1,10 +1,10 @@
 [package]
 name = "logv"
-version = "0.2.0"
+version = "0.2.1"
 authors = ["Carl Fredrik Samson <cf@samson.no>"]
 description = "A very simple program to view and filter logs easily."
 repository = "https://github.com/cfsamson/rust-logviewer"
-documentation = "https://docs.rs/rust_logv"
+documentation = "https://docs.rs/logv"
 license = "MIT"
 readme = "README.md"
 categories = ["command-line-utilities", "visualization"]
