@@ -51,7 +51,7 @@
     </select>
 
     <select id="filterLog" name: "filterLog">
-        <option name="0" value="none" selected="selected">Ingen filter</option>
+        <option name="0" value="none" selected="selected">No filter</option>
         <option name="1" value="info">INFO</option>
         <option name="2" value="warn">WARN</option>
         <option name="3" value="error">ERROR</option>
@@ -63,9 +63,9 @@
     <table id="logs" class="table">
         <thead>
             <tr>
-                <th scope="col">Linje #</td>
+                <th scope="col">Line #</td>
                 <th scope="col">Type</td>
-                <th scope="col">Tekst</td>
+                <th scope="col">Text</td>
             </tr>
         </thead>
         <tbody>
@@ -80,11 +80,11 @@
             filename: "Log001.log",
             log_entries: [{
                 line: 1,
-                entry: { Info: "INFO: This is some info" }
+                entry: { Info: "INFO: If you see this" }
             },
             {
                 line: 2,
-                entry: { Error: "ERROR: This is an error" }
+                entry: { Error: "ERROR: This has been an error loading the log files" }
             }
             ]
         },
@@ -92,24 +92,24 @@
             filename: "Log002.log",
             log_entries: [{
                 line: 1,
-                entry: { Info: "INFO: This another line of info" }
+                entry: { Info: "INFO: Try again once more" }
 
             },
             {
                 line: 2,
-                entry: { Error: "ERROR: This an different error that occurred earlier" }
+                entry: { Error: "ERROR: and take a look at the log output in the console" }
             },
             {
                 line: 3,
-                entry: { Debug: "DEBUG: This some debug log info" }
+                entry: { Debug: "DEBUG: If you encounter the same problem again" }
             },
             {
                 line: 4,
-                entry: { Warn: "WARN: This a warning about something that should not happen" }
+                entry: { Warn: "WARN: try running the program from a different folder" }
             },
             {
                 line: 5,
-                entry: { Other: "OTHER: This is an log line that we couldn't parse" }
+                entry: { Other: "OTHER: or create an issue at https://github.com/cfsamson/rust-logviewer" }
             }
             ]
         }
@@ -139,7 +139,7 @@
                 DATA = data.data;
             } else {
                 console.log(`ERROR: ${data.message}`);
-                // show error
+                // show error popup?
             }
 
             await sleep;
@@ -150,8 +150,6 @@
 
             let filterSelect = document.getElementById("filterLog");
             filterSelect.onchange = filterLog;
-
-            //drawData(data)
         }
 
         function dataLoaded() {
@@ -258,7 +256,7 @@
         function drawData(data) {
             let table = document.getElementById("logs");
             let tbody = table.getElementsByTagName("tbody")[0];
-            // remove elements in the table
+            // remove existing elements in the table
             let c_nodescount = tbody.childElementCount;
             for (i = 0; i < c_nodescount; i++) {
                 tbody.removeChild(tbody.lastChild);

@@ -15,25 +15,63 @@ use std::{
 
 use rocket_contrib::json::Json;
 
-#[get("/")]
-fn index() -> Html<&'static str> {
-    let index = include_str!("../web/index.html");
-    Html(index)
+#[derive(Debug, Serialize)]
+pub enum Entry {
+    Debug(String),
+    Info(String),
+    Warn(String),
+    Error(String),
+    Other(String),
 }
 
-#[get("/logs")]
-fn get_logs() -> Json<Resp> {
-    let files = match log_file_search() {
-        Ok(files) => files,
-        Err(e) => return Json(Resp::error(e.to_string())),
-    };
+/// Line # in the logfile and the parsed log data for that line
+#[derive(Debug, Serialize)]
+struct LogEntry {
+    line: usize,
+    entry: Entry,
+}
 
-    let log_files = match parse_log_files(files) {
-        Ok(log_files) => log_files,
-        Err(e) => return Json(Resp::error(e.to_string())),
-    };
+impl LogEntry {
+    fn debug(line: usize, msg: String) -> Self {
+        LogEntry {
+            line,
+            entry: Entry::Debug(msg),
+        }
+    }
 
-    Json(Resp::success(log_files))
+    fn info(line: usize, msg: String) -> Self {
+        LogEntry {
+            line,
+            entry: Entry::Info(msg),
+        }
+    }
+
+    fn warn(line: usize, msg: String) -> Self {
+        LogEntry {
+            line,
+            entry: Entry::Warn(msg),
+        }
+    }
+
+    fn error(line: usize, msg: String) -> Self {
+        LogEntry {
+            line,
+            entry: Entry::Error(msg),
+        }
+    }
+
+    fn other(line: usize, msg: String) -> Self {
+        LogEntry {
+            line,
+            entry: Entry::Other(msg),
+        }
+    }
+}
+
+#[derive(Debug, Serialize)]
+pub struct LogFile {
+    filename: String,
+    log_entries: Vec<LogEntry>,
 }
 
 #[derive(Debug, Default, Serialize)]
@@ -61,21 +99,30 @@ impl Resp {
     }
 }
 
-fn main() {
-    if let Err(e) = launch_browser("http://localhost:9000/") {
-        println!("Failed to launch browser: {}", e);
-    }
+#[get("/")]
+fn index() -> Html<&'static str> {
+    let index = include_str!("../web/index.html");
+    Html(index)
+}
 
-    let config = Config::build(rocket::config::Environment::Production)
-        .address("localhost")
-        .port(9000)
-        .log_level(rocket::config::LoggingLevel::Normal)
-        .finalize()
-        .expect("Invalid configuration");
+#[get("/logs")]
+fn get_logs() -> Json<Resp> {
+    let files = match log_file_search() {
+        Ok(files) => files,
+        Err(e) => return Json(Resp::error(e.to_string())),
+    };
 
-    rocket::custom(config)
-        .mount("/", routes![index, get_logs])
-        .launch();
+    let log_files = match parse_log_files(files) {
+        Ok(log_files) => log_files,
+        Err(e) => return Json(Resp::error(e.to_string())),
+    };
+
+    Json(Resp::success(log_files))
+}
+
+pub struct RawFile {
+    filename: String,
+    file: File,
 }
 
 pub fn parse_log_files(files: Vec<RawFile>) -> Result<Vec<LogFile>, io::Error> {
@@ -179,70 +226,6 @@ fn parse_log_file(file: File) -> Result<Vec<LogEntry>, io::Error> {
     Ok(log_entries)
 }
 
-pub struct RawFile {
-    filename: String,
-    file: File,
-}
-
-#[derive(Debug, Serialize)]
-pub struct LogFile {
-    filename: String,
-    log_entries: Vec<LogEntry>,
-}
-
-#[derive(Debug, Serialize)]
-struct LogEntry {
-    line: usize,
-    entry: Entry,
-}
-
-impl LogEntry {
-    fn debug(line: usize, msg: String) -> Self {
-        LogEntry {
-            line,
-            entry: Entry::Debug(msg),
-        }
-    }
-
-    fn info(line: usize, msg: String) -> Self {
-        LogEntry {
-            line,
-            entry: Entry::Info(msg),
-        }
-    }
-
-    fn warn(line: usize, msg: String) -> Self {
-        LogEntry {
-            line,
-            entry: Entry::Warn(msg),
-        }
-    }
-
-    fn error(line: usize, msg: String) -> Self {
-        LogEntry {
-            line,
-            entry: Entry::Error(msg),
-        }
-    }
-
-    fn other(line: usize, msg: String) -> Self {
-        LogEntry {
-            line,
-            entry: Entry::Other(msg),
-        }
-    }
-}
-
-/// Contains the log entry and the line number
-#[derive(Debug, Serialize)]
-pub enum Entry {
-    Debug(String),
-    Info(String),
-    Warn(String),
-    Error(String),
-    Other(String),
-}
-
 fn launch_browser(url: &str) -> io::Result<()> {
     if cfg!(target_os = "windows") {
         let start_command = String::from("start ") + url;
@@ -257,4 +240,21 @@ fn launch_browser(url: &str) -> io::Result<()> {
     }
 
     Ok(())
+}
+
+fn main() {
+    if let Err(e) = launch_browser("http://localhost:9000/") {
+        eprintln!("Failed to launch browser: {}", e);
+    }
+
+    let config = Config::build(rocket::config::Environment::Production)
+        .address("localhost")
+        .port(9000)
+        .log_level(rocket::config::LoggingLevel::Normal)
+        .finalize()
+        .expect("Invalid configuration");
+
+    rocket::custom(config)
+        .mount("/", routes![index, get_logs])
+        .launch();
 }
