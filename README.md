@@ -52,16 +52,15 @@ There is no paging so rendering very large files will take a lot of resources.
 
 ## Installation
 
-*`+nightly` required since we use the [Rocket web server](https://rocket.rs/)
+Run:
 
-`cargo +nightly install logv`
+```
+cargo install logv
+```
 
 Or download the source code, build with `cargo build --release` and drop
 the resulting binary somewhere in "PATH" so you can call it in a project
 directory from the command line.
-
-Since the program depends on the Rocket web framework, it requires nightly so
-set `rustup override set nightly` before building if you compiling from source.
 
 ## Technical details
 
