@@ -1,6 +1,6 @@
 [package]
 name = "logv"
-version = "0.2.2"
+version = "0.3.0"
 authors = ["Carl Fredrik Samson <cf@samson.no>"]
 description = "A very simple program to view and filter logs easily."
 repository = "https://github.com/cfsamson/rust-logviewer"
