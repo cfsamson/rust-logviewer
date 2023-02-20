@@ -1,9 +1,6 @@
-#![feature(proc_macro_hygiene, decl_macro)]
+#[macro_use] extern crate rocket;
 
-#[macro_use]
-extern crate rocket;
-use rocket::{response::content::Html, Config};
-use serde::Serialize;
+use rocket::{response::content, serde::Serialize, serde::json::Json};
 
 use std::{
     fs::{self, File},
@@ -13,9 +10,8 @@ use std::{
     vec,
 };
 
-use rocket_contrib::json::Json;
-
 #[derive(Debug, Serialize)]
+#[serde(crate = "rocket::serde")]
 pub enum Entry {
     Debug(String),
     Info(String),
@@ -26,6 +22,7 @@ pub enum Entry {
 
 /// Line # in the logfile and the parsed log data for that line
 #[derive(Debug, Serialize)]
+#[serde(crate = "rocket::serde")]
 struct LogEntry {
     line: usize,
     entry: Entry,
@@ -69,12 +66,14 @@ impl LogEntry {
 }
 
 #[derive(Debug, Serialize)]
+#[serde(crate = "rocket::serde")]
 pub struct LogFile {
     filename: String,
     log_entries: Vec<LogEntry>,
 }
 
 #[derive(Debug, Default, Serialize)]
+#[serde(crate = "rocket::serde")]
 struct Resp {
     response: String,
     message: String,
@@ -100,9 +99,9 @@ impl Resp {
 }
 
 #[get("/")]
-fn index() -> Html<&'static str> {
+fn index() -> content::RawHtml<&'static str> {
     let index = include_str!("../web/index.html");
-    Html(index)
+    content::RawHtml(index)
 }
 
 #[get("/logs")]
@@ -242,19 +241,13 @@ fn launch_browser(url: &str) -> io::Result<()> {
     Ok(())
 }
 
-fn main() {
-    if let Err(e) = launch_browser("http://localhost:9000/") {
+#[rocket::main]
+async fn main() -> Result<(), rocket::Error> {
+    if let Err(e) = launch_browser("http://localhost:8000/") {
         eprintln!("Failed to launch browser: {}", e);
     }
 
-    let config = Config::build(rocket::config::Environment::Production)
-        .address("localhost")
-        .port(9000)
-        .log_level(rocket::config::LoggingLevel::Normal)
-        .finalize()
-        .expect("Invalid configuration");
+    let _rocket = rocket::build().mount("/", routes![index, get_logs]).launch().await?;
 
-    rocket::custom(config)
-        .mount("/", routes![index, get_logs])
-        .launch();
+    Ok(())
 }
