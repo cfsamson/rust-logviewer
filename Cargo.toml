@@ -12,6 +12,4 @@ keywords = ["visualization", "debug-tool", "log", "viewer" ]
 edition = "2018"
 
 [dependencies]
-rocket = "0.4.7"
-rocket_contrib = "0.4.7"
-serde = { version = "1.0.124", features = ["derive"] }
+rocket = { version = "0.5.0-rc.2", features = ["json"]}
